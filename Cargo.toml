@@ -1,0 +1,11 @@
+[package]
+name = "mdview"
+version = "0.1.0"
+edition = "2024"
+description = "A lightweight, CLI-first markdown viewer for Linux"
+
+[dependencies]
+gtk4 = "0.9"
+webkit6 = "0.4"
+comrak = { version = "0.36", default-features = false }
+clap = { version = "4", features = ["derive"] }
