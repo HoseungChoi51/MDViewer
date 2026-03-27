@@ -612,7 +612,13 @@ fn build_ui(app: &Application, cli: &Cli) {
 fn main() {
     let cli = Cli::parse();
 
-    let app = Application::builder().application_id(APP_ID).build();
+    let app = Application::builder()
+        .application_id(APP_ID)
+        .flags(gio::ApplicationFlags::NON_UNIQUE)
+        .build();
+    // Prevent DBus registration — not needed for a viewer, and avoids
+    // AppArmor denials under snap strict confinement.
+    app.set_register_session(false);
 
     let cli = std::sync::Arc::new(cli);
     let cli_clone = cli.clone();

@@ -1,0 +1,39 @@
+name: mdview
+base: core22
+version: '0.1.0'
+summary: Lightweight, keyboard-driven markdown viewer for Linux
+description: |
+  A minimal, read-only, CLI-first markdown viewer. Opens a local .md file
+  (or stdin) in a native window and renders it with syntax highlighting.
+  Supports GFM tables, task lists, dark/light themes, live reload on save,
+  and keyboard zoom. No editing, no bloat — just clean reading.
+
+  Usage: mdview file.md
+  Keybindings: q/Esc quit, t cycle theme, r reload, Ctrl+/-/0 zoom
+
+grade: devel
+confinement: strict
+
+layout:
+  /usr/lib/x86_64-linux-gnu/webkitgtk-6.0:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/webkitgtk-6.0
+
+apps:
+  mdview:
+    command: bin/mdview
+    extensions: [gnome]
+    plugs:
+      - home
+      - browser-support
+      - opengl
+      - network
+
+parts:
+  mdview:
+    plugin: rust
+    source: .
+    build-packages:
+      - libgtk-4-dev
+      - libwebkitgtk-6.0-dev
+    stage-packages:
+      - libwebkitgtk-6.0-4
