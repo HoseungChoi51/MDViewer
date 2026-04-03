@@ -11,7 +11,7 @@ use gtk4::prelude::*;
 use gtk4::{Application, ApplicationWindow, EventControllerKey};
 use serde::{Deserialize, Serialize};
 use webkit6::prelude::*;
-use webkit6::WebView;
+use webkit6::{PrintOperation, WebView};
 
 const APP_ID: &str = "com.github.mdview";
 const BASE_CSS: &str = include_str!("theme.css");
@@ -461,12 +461,68 @@ fn build_ui(app: &Application, cli: &Cli) {
         false
     });
 
+    // --- Menu overlay (m to open, p to print, any key to close) ---
+    let menu_box = gtk4::Box::new(gtk4::Orientation::Vertical, 8);
+    menu_box.set_halign(gtk4::Align::Center);
+    menu_box.set_valign(gtk4::Align::Center);
+    menu_box.set_visible(false);
+    menu_box.add_css_class("mdview-menu");
+
+    let lbl = gtk4::Label::new(Some("mdview"));
+    lbl.add_css_class("mdview-menu-title");
+    menu_box.append(&lbl);
+
+    let sep = gtk4::Separator::new(gtk4::Orientation::Horizontal);
+    sep.add_css_class("mdview-menu-sep");
+    menu_box.append(&sep);
+
+    for (key, desc) in [("p", "Print / Export PDF"), ("Esc", "Close menu")] {
+        let item = gtk4::Label::new(Some(&format!("{:<5} {}", key, desc)));
+        item.set_halign(gtk4::Align::Start);
+        item.add_css_class("mdview-menu-item");
+        menu_box.append(&item);
+    }
+
+    let overlay = gtk4::Overlay::new();
+    overlay.set_child(Some(&webview));
+    overlay.add_overlay(&menu_box);
+
+    let css_provider = gtk4::CssProvider::new();
+    css_provider.load_from_data(
+        ".mdview-menu {
+            background: rgba(30, 30, 30, 0.92);
+            border-radius: 10px;
+            padding: 20px 28px;
+            min-width: 220px;
+        }
+        .mdview-menu-title {
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .mdview-menu-sep {
+            margin: 4px 0;
+            min-height: 1px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .mdview-menu-item {
+            color: rgba(255, 255, 255, 0.75);
+            font-family: monospace;
+            font-size: 13px;
+        }",
+    );
+    gtk4::style_context_add_provider_for_display(
+        &gtk4::gdk::Display::default().unwrap(),
+        &css_provider,
+        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
+
     let window = ApplicationWindow::builder()
         .application(app)
         .title(&format!("mdview — {}", title))
         .default_width(win_width)
         .default_height(win_height)
-        .child(&webview)
+        .child(&overlay)
         .build();
 
     // Save window size and theme on close
@@ -491,11 +547,30 @@ fn build_ui(app: &Application, cli: &Cli) {
     let theme_index_reload = theme_index.clone();
     // Keep a copy of the initial markdown for stdin (can't re-read)
     let cached_markdown = std::sync::Arc::new(markdown);
+    let menu_visible = Cell::new(false);
+    let menu_clone = menu_box.clone();
 
     key_controller.connect_key_pressed(move |_, key, _, modifiers| {
         let ctrl = modifiers.contains(ModifierType::CONTROL_MASK);
 
+        // Menu mode: handle action, then close
+        if menu_visible.get() {
+            if key == Key::p {
+                let print_op = PrintOperation::new(&wv);
+                print_op.run_dialog(Some(&win));
+            }
+            menu_clone.set_visible(false);
+            menu_visible.set(false);
+            return gtk4::glib::Propagation::Stop;
+        }
+
         match (key, ctrl) {
+            // Open menu
+            (Key::m, false) => {
+                menu_clone.set_visible(true);
+                menu_visible.set(true);
+                gtk4::glib::Propagation::Stop
+            }
             // Quit
             (Key::q, false) | (Key::Escape, _) => {
                 win.close();
