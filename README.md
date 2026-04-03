@@ -16,34 +16,32 @@ A lightweight, read-only, keyboard-driven markdown viewer for Linux. Opens a `.m
 
 ## Installation
 
-### Build dependencies
+### PPA (Ubuntu, recommended)
 
-On Ubuntu/Debian:
+```
+sudo add-apt-repository ppa:hopung/tools
+sudo apt install mdview
+```
+
+### From source
+
+Build dependencies (Ubuntu/Debian):
 
 ```
 sudo apt install libgtk-4-dev libwebkitgtk-6.0-dev
 ```
 
-### Install
+Then either:
 
 ```
 cargo install --path .
 ```
 
-This places the `mdview` binary in `~/.cargo/bin/`.
-
-For a system-wide install:
+Or for a system-wide install:
 
 ```
 cargo build --release
 sudo cp target/release/mdview /usr/local/bin/
-```
-
-### Snap
-
-```
-sudo snapcraft --destructive-mode
-sudo snap install mdview_0.1.0_amd64.snap --dangerous
 ```
 
 ## Usage
