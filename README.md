@@ -16,32 +16,34 @@ A lightweight, read-only, keyboard-driven markdown viewer for Linux. Opens a `.m
 
 ## Installation
 
-### PPA (Ubuntu, recommended)
+### Snap (recommended)
 
 ```
-sudo add-apt-repository ppa:hopung/tools
-sudo apt install mdview
+sudo snap install mdview_*.snap --dangerous
 ```
 
-### From source
+`--dangerous` is needed because the snap is distributed as a local file rather than through the Snap Store. Drop it if you ever publish to a store.
 
-Build dependencies (Ubuntu/Debian):
+### Build the snap from source
+
+```
+sudo snap install snapcraft --classic
+sudo snap install lxd
+sudo lxd init --auto
+sudo usermod -aG lxd $USER     # log out / log in after this
+cd path/to/MDViewer
+snapcraft pack
+```
+
+Produces `mdview_<version>_amd64.snap` in the repo root.
+
+### Cargo build (development only)
+
+For iterating on the code without rebuilding the whole snap:
 
 ```
 sudo apt install libgtk-4-dev libwebkitgtk-6.0-dev
-```
-
-Then either:
-
-```
-cargo install --path .
-```
-
-Or for a system-wide install:
-
-```
-cargo build --release
-sudo cp target/release/mdview /usr/local/bin/
+cargo run -- README.md
 ```
 
 ## Usage

@@ -1,5 +1,5 @@
 name: mdview
-base: core22
+base: core24
 version: '0.1.0'
 summary: Lightweight, keyboard-driven markdown viewer for Linux
 description: |
@@ -11,7 +11,7 @@ description: |
   Usage: mdview file.md
   Keybindings: q/Esc quit, t cycle theme, r reload, Ctrl+/-/0 zoom
 
-grade: devel
+grade: stable
 confinement: strict
 
 layout:
@@ -27,6 +27,13 @@ apps:
       - browser-support
       - opengl
       - network
+    environment:
+      # WebKitGTK GPU paths crash on bleeding-edge Intel (e.g. Panther Lake)
+      # until mesa in core24 catches up. Software rendering is plenty for
+      # static markdown — remove these once mesa-2404 supports newer GPUs.
+      WEBKIT_DISABLE_DMABUF_RENDERER: "1"
+      WEBKIT_DISABLE_COMPOSITING_MODE: "1"
+      LIBGL_ALWAYS_SOFTWARE: "1"
 
 parts:
   mdview:

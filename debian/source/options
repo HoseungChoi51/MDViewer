@@ -1,1 +1,0 @@
-extend-diff-ignore = "^(parts|prime|stage|target|\.claude)|\.snap$"
