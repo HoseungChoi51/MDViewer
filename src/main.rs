@@ -15,6 +15,30 @@ use webkit6::{PrintOperation, WebView};
 
 const APP_ID: &str = "com.github.mdview";
 const BASE_CSS: &str = include_str!("theme.css");
+const KATEX_CSS: &str = include_str!(concat!(env!("OUT_DIR"), "/katex.inlined.css"));
+const KATEX_JS: &str = include_str!("../assets/katex/katex.min.js");
+const KATEX_BOOTSTRAP_JS: &str = r#"
+(function() {
+  function render() {
+    document.querySelectorAll("[data-math-style]").forEach(function(el) {
+      if (el.dataset.mdviewRendered) return;
+      var display = el.getAttribute("data-math-style") === "display";
+      var tex = el.textContent;
+      if (display && tex.startsWith("$$") && tex.endsWith("$$")) tex = tex.slice(2, -2);
+      else if (tex.startsWith("$") && tex.endsWith("$")) tex = tex.slice(1, -1);
+      try {
+        katex.render(tex.trim(), el, { displayMode: display, throwOnError: false });
+        el.dataset.mdviewRendered = "1";
+      } catch (e) { console.error("KaTeX:", e); }
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", render);
+  } else {
+    render();
+  }
+})();
+"#;
 const DEFAULT_ZOOM: f64 = 1.0;
 const ZOOM_STEP: f64 = 0.1;
 const THEME_COUNT: usize = 5;
@@ -377,6 +401,8 @@ fn md_to_html_doc(markdown: &str, dark: bool, theme_index: usize) -> String {
     options.extension.table = true;
     options.extension.autolink = true;
     options.extension.tasklist = true;
+    options.extension.math_dollars = true;
+    options.extension.math_code = true;
     options.render.unsafe_ = false;
 
     let theme = get_theme(dark, theme_index);
@@ -394,9 +420,12 @@ fn md_to_html_doc(markdown: &str, dark: bool, theme_index: usize) -> String {
          <html>\n\
          <head>\n\
          <meta charset=\"utf-8\">\n\
-         <style>\n{BASE_CSS}\n{colors}\n</style>\n\
+         <style>\n{BASE_CSS}\n{colors}\n{KATEX_CSS}\n</style>\n\
          </head>\n\
-         <body>\n{body}\n</body>\n\
+         <body>\n{body}\n\
+         <script>{KATEX_JS}</script>\n\
+         <script>{KATEX_BOOTSTRAP_JS}</script>\n\
+         </body>\n\
          </html>"
     )
 }
@@ -429,7 +458,9 @@ fn build_ui(app: &Application, cli: &Cli) {
 
     let webview = WebView::new();
     let settings = webkit6::prelude::WebViewExt::settings(&webview).unwrap();
-    settings.set_enable_javascript(false);
+    // JS is needed for KaTeX. Markdown HTML is still escaped (unsafe_=false in
+    // comrak), so only the bundled KaTeX scripts run.
+    settings.set_enable_javascript(true);
 
     render_to_webview(&webview, &markdown, dark, theme_index.get(), base_dir.as_ref());
 
