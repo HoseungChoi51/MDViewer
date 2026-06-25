@@ -1,0 +1,25 @@
+# myget manifest — makes `myget install` deterministic for this repo.
+# Schema: see my_get_plan.md §4. The [system] table is a local extension (see note below).
+
+[app]
+name = "mdview"
+type = "rust"            # default source build: `cargo install --path . --root ~/.local`
+
+[install]
+bin    = "mdview"        # binary placed on PATH
+method = "copy"          # release path: copy the downloaded asset into ~/.local/bin
+
+[release]
+prefer      = true                 # check GitHub release assets before building from source
+asset_match = "*-x86_64-linux*"    # matches the asset produced by .github/workflows/release.yml
+
+# --- Local extension (not in the base myget schema) -------------------------------
+# mdview is a GTK4 + WebKitGTK6 app, so it needs system libraries the base schema
+# can't express. `build` packages are required only for the source-build fallback;
+# `runtime` packages are required for both the prebuilt binary and a source build.
+# Package names are apt (Debian/Ubuntu). myget should verify these are present
+# (and ideally offer to apt-install them); until it learns to, this serves as the
+# machine-readable record of the dependency. Unknown tables are ignored harmlessly.
+[system]
+build   = ["libgtk-4-dev", "libwebkitgtk-6.0-dev"]
+runtime = ["libgtk-4-1", "libwebkitgtk-6.0-4"]

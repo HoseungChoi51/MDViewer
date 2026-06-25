@@ -16,7 +16,30 @@ A lightweight, read-only, keyboard-driven markdown viewer for Linux. Opens a `.m
 
 ## Installation
 
-### Snap (recommended)
+### myget (recommended)
+
+This repo is published through `myget`, a personal GitHub-backed installer.
+Once the repo carries the `myget` topic, install with:
+
+```
+myget install MDViewer
+```
+
+The GitHub repo is `MDViewer`; the installed command is `mdview`. `myget` prefers the
+prebuilt `mdview-x86_64-linux` release asset and falls back to a source build
+(`cargo install --path .`) when no matching asset exists. Build behavior, the release-asset
+match, and the system dependencies below are declared in [`.myget.toml`](.myget.toml).
+
+**System dependencies** (apt / Debian / Ubuntu):
+
+- Runtime (prebuilt binary *and* source build): `libgtk-4-1 libwebkitgtk-6.0-4`
+- Additional for the source-build fallback: `libgtk-4-dev libwebkitgtk-6.0-dev` (plus a Rust toolchain)
+
+```
+sudo apt install libgtk-4-1 libwebkitgtk-6.0-4   # runtime
+```
+
+### Snap
 
 ```
 sudo snap install mdview_*.snap --dangerous

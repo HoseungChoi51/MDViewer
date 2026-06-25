@@ -1,0 +1,43 @@
+name: release
+
+# Build a prebuilt Linux binary and attach it to the GitHub Release when a
+# version tag is pushed (e.g. `git tag v0.1.0 && git push origin v0.1.0`).
+# The asset name `mdview-x86_64-linux` matches `[release].asset_match` in .myget.toml,
+# so `myget install` prefers this binary over building from source.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # needed to create/update the GitHub Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      - name: Package binary + checksum
+        run: |
+          cp target/release/mdview mdview-x86_64-linux
+          sha256sum mdview-x86_64-linux > mdview-x86_64-linux.sha256
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            mdview-x86_64-linux
+            mdview-x86_64-linux.sha256
